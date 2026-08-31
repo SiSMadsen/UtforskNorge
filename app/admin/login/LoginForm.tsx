@@ -1,11 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 export function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -30,7 +29,9 @@ export function LoginForm() {
         return;
       }
 
-      const from = searchParams.get("from");
+      // Read the post-login target at submit time (client-only) so this
+      // component renders deterministically on the server.
+      const from = new URLSearchParams(window.location.search).get("from");
       const destination = from && from.startsWith("/admin") ? from : "/admin";
       router.replace(destination);
       router.refresh();
