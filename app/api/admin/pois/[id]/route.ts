@@ -1,11 +1,13 @@
 import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { pois } from "@/db/schema";
+import { poiImages, pois } from "@/db/schema";
 import type { Point } from "@/db/postgis";
 import { requireAdmin } from "@/lib/auth";
 import { isUuid, parsePoint } from "@/lib/geo";
 import { poiFeatureFromRow } from "@/lib/geojson";
+import { poiImageList } from "@/lib/images";
+import { deleteImage } from "@/lib/storage";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -72,7 +74,7 @@ export async function PATCH(request: Request, { params }: Params) {
     .returning(returning);
 
   if (!row) return Response.json({ error: "Not found." }, { status: 404 });
-  return Response.json({ feature: poiFeatureFromRow(row) });
+  return Response.json({ feature: poiFeatureFromRow(row, await poiImageList(id)) });
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
@@ -83,6 +85,13 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!isUuid(id)) {
     return Response.json({ error: "Not found." }, { status: 404 });
   }
+
+  // Remove image files first; the DB rows go with the POI via ON DELETE CASCADE.
+  const images = await db
+    .select({ storagePath: poiImages.storagePath })
+    .from(poiImages)
+    .where(eq(poiImages.poiId, id));
+  await Promise.all(images.map((img) => deleteImage(img.storagePath)));
 
   const [row] = await db
     .delete(pois)

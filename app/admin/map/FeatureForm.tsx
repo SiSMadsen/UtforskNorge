@@ -2,6 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 
+import type { ImageRef } from "@/lib/geojson";
+
+import { ImageManager } from "./ImageManager";
 import type { Draft, FeatureFormValues } from "./types";
 
 function initialValues(draft: Draft): FeatureFormValues {
@@ -20,10 +23,16 @@ export function FeatureForm({
   draft,
   onSubmit,
   onCancel,
+  onImagesChange,
 }: {
   draft: Draft;
   onSubmit: (values: FeatureFormValues) => Promise<void>;
   onCancel: () => void;
+  onImagesChange: (
+    kind: "poi" | "road",
+    id: string,
+    images: ImageRef[],
+  ) => void;
 }) {
   // The parent gives this component a `key` tied to the draft's identity, so a
   // switch to a different feature remounts it with fresh initial state.
@@ -60,7 +69,7 @@ export function FeatureForm({
   }`;
 
   return (
-    <div className="absolute left-3 top-3 z-[1100] w-72 rounded-lg border border-black/15 bg-[var(--background)] p-4 shadow-lg dark:border-white/20">
+    <div className="absolute left-3 top-3 z-[1100] max-h-[calc(100vh-6rem)] w-80 overflow-y-auto rounded-lg border border-black/15 bg-[var(--background)] p-4 shadow-lg dark:border-white/20">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="text-sm font-semibold">{label}</div>
 
@@ -113,6 +122,19 @@ export function FeatureForm({
 
         {error ? (
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+        ) : null}
+
+        {draft.mode === "edit" ? (
+          <div className="border-t border-black/10 pt-3 dark:border-white/15">
+            <ImageManager
+              kind={draft.kind}
+              ownerId={draft.id}
+              images={draft.feature.properties.images}
+              onChange={(images) =>
+                onImagesChange(draft.kind, draft.id, images)
+              }
+            />
+          </div>
         ) : null}
 
         <div className="flex gap-2 pt-1">

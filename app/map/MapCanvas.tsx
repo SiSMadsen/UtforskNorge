@@ -13,23 +13,76 @@ import {
   NORWAY_ZOOM,
   toLatLng,
 } from "@/lib/map";
-import type { PoiCollection, RoadSegmentCollection } from "@/lib/geojson";
+import type {
+  ImageRef,
+  PoiCollection,
+  RoadSegmentCollection,
+} from "@/lib/geojson";
 
 setupLeafletDefaultIcon();
+
+function PopupGallery({ images }: { images: ImageRef[] }) {
+  const [index, setIndex] = useState(0);
+  if (images.length === 0) return null;
+
+  const current = Math.min(index, images.length - 1);
+  const image = images[current];
+
+  return (
+    <div className="mt-2">
+      <a href={image.url} target="_blank" rel="noreferrer">
+        <span className="block h-32 w-full overflow-hidden rounded bg-black/5 dark:bg-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image.url}
+            alt={image.caption ?? ""}
+            className="h-full w-full object-contain"
+          />
+        </span>
+      </a>
+      {images.length > 1 ? (
+        <div className="mt-1 flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={() =>
+              setIndex((current - 1 + images.length) % images.length)
+            }
+            className="px-1"
+          >
+            ‹ Prev
+          </button>
+          <span>
+            {current + 1} / {images.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => setIndex((current + 1) % images.length)}
+            className="px-1"
+          >
+            Next ›
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function FeaturePopup({
   title,
   description,
+  images,
 }: {
   title: string;
   description: string | null;
+  images: ImageRef[];
 }) {
   return (
-    <Popup>
+    <Popup minWidth={200} maxWidth={260}>
       <strong>{title}</strong>
       {description ? (
         <p className="mt-1 whitespace-pre-line">{description}</p>
       ) : null}
+      <PopupGallery images={images} />
     </Popup>
   );
 }
@@ -92,6 +145,7 @@ export function MapCanvas() {
             <FeaturePopup
               title={feature.properties.title}
               description={feature.properties.description}
+              images={feature.properties.images}
             />
           </Marker>
         ))}
@@ -104,6 +158,7 @@ export function MapCanvas() {
             <FeaturePopup
               title={feature.properties.title}
               description={feature.properties.description}
+              images={feature.properties.images}
             />
           </Polyline>
         ))}

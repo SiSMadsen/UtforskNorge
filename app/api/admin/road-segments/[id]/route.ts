@@ -1,11 +1,13 @@
 import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { roadSegments } from "@/db/schema";
+import { roadSegmentImages, roadSegments } from "@/db/schema";
 import type { LineString } from "@/db/postgis";
 import { requireAdmin } from "@/lib/auth";
 import { isUuid, parseLineString } from "@/lib/geo";
 import { roadSegmentFeatureFromRow } from "@/lib/geojson";
+import { roadSegmentImageList } from "@/lib/images";
+import { deleteImage } from "@/lib/storage";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -72,7 +74,9 @@ export async function PATCH(request: Request, { params }: Params) {
     .returning(returning);
 
   if (!row) return Response.json({ error: "Not found." }, { status: 404 });
-  return Response.json({ feature: roadSegmentFeatureFromRow(row) });
+  return Response.json({
+    feature: roadSegmentFeatureFromRow(row, await roadSegmentImageList(id)),
+  });
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
@@ -83,6 +87,13 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!isUuid(id)) {
     return Response.json({ error: "Not found." }, { status: 404 });
   }
+
+  // Remove image files first; the DB rows go with the segment via ON DELETE CASCADE.
+  const images = await db
+    .select({ storagePath: roadSegmentImages.storagePath })
+    .from(roadSegmentImages)
+    .where(eq(roadSegmentImages.roadSegmentId, id));
+  await Promise.all(images.map((img) => deleteImage(img.storagePath)));
 
   const [row] = await db
     .delete(roadSegments)

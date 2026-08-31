@@ -6,6 +6,7 @@ import {
   roadSegmentFeatureFromRow,
   type RoadSegmentCollection,
 } from "@/lib/geojson";
+import { roadSegmentImagesByOwner } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,13 @@ export async function GET() {
     })
     .from(roadSegments);
 
+  const imagesByOwner = await roadSegmentImagesByOwner(rows.map((r) => r.id));
+
   const body: RoadSegmentCollection = {
     type: "FeatureCollection",
-    features: rows.map(roadSegmentFeatureFromRow),
+    features: rows.map((row) =>
+      roadSegmentFeatureFromRow(row, imagesByOwner.get(row.id) ?? []),
+    ),
   };
 
   return Response.json(body);

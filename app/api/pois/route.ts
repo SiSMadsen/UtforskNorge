@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { pois } from "@/db/schema";
 import { poiFeatureFromRow, type PoiCollection } from "@/lib/geojson";
+import { poiImagesByOwner } from "@/lib/images";
 
 // Reads live geometry out of PostGIS, so this route is evaluated per request.
 export const dynamic = "force-dynamic";
@@ -19,9 +20,13 @@ export async function GET() {
     })
     .from(pois);
 
+  const imagesByPoi = await poiImagesByOwner(rows.map((r) => r.id));
+
   const body: PoiCollection = {
     type: "FeatureCollection",
-    features: rows.map(poiFeatureFromRow),
+    features: rows.map((row) =>
+      poiFeatureFromRow(row, imagesByPoi.get(row.id) ?? []),
+    ),
   };
 
   return Response.json(body);

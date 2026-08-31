@@ -15,6 +15,7 @@ import {
 } from "@/lib/map";
 import type { LineString, Point } from "@/db/postgis";
 import type {
+  ImageRef,
   PoiCollection,
   PoiFeature,
   RoadSegmentCollection,
@@ -74,6 +75,29 @@ export function AdminMap() {
       setDraft({ kind: "road", mode: "create", geometry });
     }
   }, []);
+
+  const handleImagesChange = useCallback(
+    (kind: "poi" | "road", id: string, images: ImageRef[]) => {
+      if (kind === "poi") {
+        setPois((prev) =>
+          prev.map((f) =>
+            f.properties.id === id
+              ? { ...f, properties: { ...f.properties, images } }
+              : f,
+          ),
+        );
+      } else {
+        setRoads((prev) =>
+          prev.map((f) =>
+            f.properties.id === id
+              ? { ...f, properties: { ...f.properties, images } }
+              : f,
+          ),
+        );
+      }
+    },
+    [],
+  );
 
   async function submitDraft(values: FeatureFormValues) {
     if (!draft) return;
@@ -256,6 +280,7 @@ export function AdminMap() {
             draft={draft}
             onSubmit={submitDraft}
             onCancel={() => setDraft(null)}
+            onImagesChange={handleImagesChange}
           />
         ) : null}
       </div>

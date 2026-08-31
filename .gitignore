@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# local image storage (served via /api/images, never directly)
+/uploads
+
 # debug
 npm-debug.log*
 yarn-debug.log*
