@@ -1,38 +1,74 @@
 @import "tailwindcss";
 
+/*
+ * Field-journal identity. One committed light palette — no dark scheme.
+ *   paper  #E4E1D9  page / panel background
+ *   ink    #1E2422  body text
+ *   slate  #35505C  UI chrome (labels, dates, road lines at rest)
+ *   moss   #6B7A5E  category tags
+ *   falu   #7A2E24  single accent — map pins, active states
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e4e1d9;
+  --foreground: #1e2422;
+}
+
+@theme {
+  --color-paper: #e4e1d9;
+  --color-ink: #1e2422;
+  --color-slate: #35505c;
+  --color-moss: #6b7a5e;
+  --color-falu: #7a2e24;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
 
-/*
- * leaflet-draw ships its toolbar sprite as a CSS-relative url() that the bundler
- * does not rewrite; pin it to the copy served from /public.
- */
-.leaflet-draw-toolbar a {
-  background-image: url("/leaflet-draw/spritesheet.png");
-  background-image:
-    linear-gradient(transparent, transparent),
-    url("/leaflet-draw/spritesheet.svg");
+/* Visible keyboard focus everywhere (sidebar close button, gallery, links). */
+:focus-visible {
+  outline: 2px solid var(--color-falu);
+  outline-offset: 2px;
 }
 
+/* --- public map pins ------------------------------------------------------ */
+
+/* Strip Leaflet's default white box/border from our divIcon markers. */
+.leaflet-marker-icon.poi-pin-marker {
+  background: transparent;
+  border: 0;
+}
+
+.poi-pin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-falu);
+  box-shadow:
+    0 0 0 3px rgba(228, 225, 217, 0.95),
+    0 1px 2px rgba(30, 36, 34, 0.45);
+}
+
+.poi-pin--active {
+  width: 18px;
+  height: 18px;
+  box-shadow:
+    0 0 0 3px rgba(228, 225, 217, 0.95),
+    0 0 0 7px rgba(122, 46, 36, 0.28),
+    0 1px 2px rgba(30, 36, 34, 0.45);
+}
+
+/* Journal timeline dividers sit better without the default list markers. */
+.journal-timeline > li::marker {
+  content: "";
+}
