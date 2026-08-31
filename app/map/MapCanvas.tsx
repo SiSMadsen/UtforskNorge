@@ -6,22 +6,20 @@ import L from "leaflet";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import type { PoiCollection, RoadSegmentCollection } from "@/lib/geojson";
 
-// The bundler rewrites Leaflet's built-in icon URLs, so rebuild the default
-// marker icon from the assets shipped in the `leaflet` package.
-const markerDefaultIcon = L.icon({
-  iconUrl: markerIcon.src,
-  iconRetinaUrl: markerIcon2x.src,
-  shadowUrl: markerShadow.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+// Leaflet's bundled marker icons don't survive bundling (Turbopack dev in
+// particular hands back a URL-less object), so point the default icon at the
+// copies served from /public/leaflet instead.
+type IconDefaultPrototype = typeof L.Icon.Default.prototype & {
+  _getIconUrl?: unknown;
+};
+delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: "/leaflet/marker-icon.png",
+  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
 });
 
 const NORWAY_CENTER: [number, number] = [64.5, 11];
@@ -46,7 +44,9 @@ function FeaturePopup({
   return (
     <Popup>
       <strong>{title}</strong>
-      {description ? <p className="mt-1 whitespace-pre-line">{description}</p> : null}
+      {description ? (
+        <p className="mt-1 whitespace-pre-line">{description}</p>
+      ) : null}
     </Popup>
   );
 }
@@ -105,7 +105,6 @@ export function MapCanvas() {
           <Marker
             key={feature.properties.id}
             position={toLatLng(feature.geometry.coordinates)}
-            icon={markerDefaultIcon}
           >
             <FeaturePopup
               title={feature.properties.title}
