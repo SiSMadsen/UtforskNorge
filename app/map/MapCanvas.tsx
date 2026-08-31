@@ -2,37 +2,20 @@
 
 import { useEffect, useState } from "react";
 
-import L from "leaflet";
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
-
 import "leaflet/dist/leaflet.css";
 
+import { setupLeafletDefaultIcon } from "@/lib/leaflet-setup";
+import {
+  KARTVERKET_ATTRIBUTION,
+  KARTVERKET_TILE_URL,
+  NORWAY_CENTER,
+  NORWAY_ZOOM,
+  toLatLng,
+} from "@/lib/map";
 import type { PoiCollection, RoadSegmentCollection } from "@/lib/geojson";
 
-// Leaflet's bundled marker icons don't survive bundling (Turbopack dev in
-// particular hands back a URL-less object), so point the default icon at the
-// copies served from /public/leaflet instead.
-type IconDefaultPrototype = typeof L.Icon.Default.prototype & {
-  _getIconUrl?: unknown;
-};
-delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: "/leaflet/marker-icon.png",
-  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
-  shadowUrl: "/leaflet/marker-shadow.png",
-});
-
-const NORWAY_CENTER: [number, number] = [64.5, 11];
-const NORWAY_ZOOM = 5;
-
-// Kartverket topographic map (Web Mercator), free to use with attribution.
-const KARTVERKET_TILE_URL =
-  "https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png";
-const KARTVERKET_ATTRIBUTION =
-  '&copy; <a href="https://www.kartverket.no/">Kartverket</a>';
-
-// GeoJSON stores coordinates as [lng, lat]; Leaflet wants [lat, lng].
-const toLatLng = ([lng, lat]: [number, number]): [number, number] => [lat, lng];
+setupLeafletDefaultIcon();
 
 function FeaturePopup({
   title,

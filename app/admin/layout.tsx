@@ -12,14 +12,14 @@ export default async function AdminLayout({
   const session = await getSession();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col">
       {session.isLoggedIn ? (
         <header className="flex items-center justify-between border-b border-black/10 px-6 py-3 dark:border-white/15">
           <span className="text-sm font-medium">Norway POI Map · Admin</span>
           <LogoutButton />
         </header>
       ) : null}
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col">{children}</main>
     </div>
   );
 }

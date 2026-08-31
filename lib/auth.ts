@@ -13,3 +13,17 @@ export async function getSession(): Promise<IronSession<SessionData>> {
   }
   return getIronSession<SessionData>(await cookies(), sessionOptions);
 }
+
+/**
+ * Server-side gate for /api/admin/* route handlers. Returns a 401 `Response`
+ * when the caller has no valid session, or `null` to proceed. The proxy already
+ * blocks unauthenticated navigation to /admin; this is the belt-and-braces
+ * check on the API itself.
+ */
+export async function requireAdmin(): Promise<Response | null> {
+  const session = await getSession();
+  if (!session.isLoggedIn) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}

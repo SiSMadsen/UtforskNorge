@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * leaflet-draw ships its toolbar sprite as a CSS-relative url() that the bundler
+ * does not rewrite; pin it to the copy served from /public.
+ */
+.leaflet-draw-toolbar a {
+  background-image: url("/leaflet-draw/spritesheet.png");
+  background-image:
+    linear-gradient(transparent, transparent),
+    url("/leaflet-draw/spritesheet.svg");
+}
+

@@ -2,8 +2,7 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { pois } from "@/db/schema";
-import type { Point } from "@/db/postgis";
-import type { PoiCollection } from "@/lib/geojson";
+import { poiFeatureFromRow, type PoiCollection } from "@/lib/geojson";
 
 // Reads live geometry out of PostGIS, so this route is evaluated per request.
 export const dynamic = "force-dynamic";
@@ -22,16 +21,7 @@ export async function GET() {
 
   const body: PoiCollection = {
     type: "FeatureCollection",
-    features: rows.map((row) => ({
-      type: "Feature",
-      geometry: JSON.parse(row.geojson) as Point,
-      properties: {
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        category: row.category,
-      },
-    })),
+    features: rows.map(poiFeatureFromRow),
   };
 
   return Response.json(body);
