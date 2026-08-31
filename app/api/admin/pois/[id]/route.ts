@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { isUuid, parsePoint } from "@/lib/geo";
 import { poiFeatureFromRow } from "@/lib/geojson";
 import { poiImageList } from "@/lib/images";
+import { poiJournalList } from "@/lib/journal";
 import { deleteImage } from "@/lib/storage";
 
 type Params = { params: Promise<{ id: string }> };
@@ -74,7 +75,13 @@ export async function PATCH(request: Request, { params }: Params) {
     .returning(returning);
 
   if (!row) return Response.json({ error: "Not found." }, { status: 404 });
-  return Response.json({ feature: poiFeatureFromRow(row, await poiImageList(id)) });
+  const [images, journalEntries] = await Promise.all([
+    poiImageList(id),
+    poiJournalList(id),
+  ]);
+  return Response.json({
+    feature: poiFeatureFromRow(row, { images, journalEntries }),
+  });
 }
 
 export async function DELETE(_request: Request, { params }: Params) {

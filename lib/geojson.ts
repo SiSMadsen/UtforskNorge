@@ -14,12 +14,21 @@ export type ImageRef = {
   sortOrder: number;
 };
 
+export type JournalEntry = {
+  id: string;
+  /** `YYYY-MM-DD`. */
+  entryDate: string;
+  body: string;
+  createdAt: string;
+};
+
 export type PoiProperties = {
   id: string;
   title: string;
   description: string | null;
   category: string | null;
   images: ImageRef[];
+  journalEntries: JournalEntry[];
 };
 
 export type RoadSegmentProperties = {
@@ -27,6 +36,7 @@ export type RoadSegmentProperties = {
   title: string;
   description: string | null;
   images: ImageRef[];
+  journalEntries: JournalEntry[];
 };
 
 export type Feature<G, P> = {
@@ -66,19 +76,40 @@ export function toImageRef(row: ImageRow): ImageRef {
   };
 }
 
+export type JournalEntryRow = {
+  id: string;
+  entryDate: string;
+  body: string;
+  createdAt: Date;
+};
+
+export function toJournalEntry(row: JournalEntryRow): JournalEntry {
+  return {
+    id: row.id,
+    entryDate: row.entryDate,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
 /**
  * Row shapes returned by the API queries: the table columns plus PostGIS's
  * `ST_AsGeoJSON(geometry)` as a JSON string.
  */
-export type PoiRow = Omit<PoiProperties, "images"> & { geojson: string };
-export type RoadSegmentRow = Omit<RoadSegmentProperties, "images"> & {
+export type PoiRow = Omit<PoiProperties, "images" | "journalEntries"> & {
   geojson: string;
 };
+export type RoadSegmentRow = Omit<
+  RoadSegmentProperties,
+  "images" | "journalEntries"
+> & { geojson: string };
 
-export function poiFeatureFromRow(
-  row: PoiRow,
-  images: ImageRef[] = [],
-): PoiFeature {
+type Related = {
+  images?: ImageRef[];
+  journalEntries?: JournalEntry[];
+};
+
+export function poiFeatureFromRow(row: PoiRow, related: Related = {}): PoiFeature {
   return {
     type: "Feature",
     geometry: JSON.parse(row.geojson) as Point,
@@ -87,14 +118,15 @@ export function poiFeatureFromRow(
       title: row.title,
       description: row.description,
       category: row.category,
-      images,
+      images: related.images ?? [],
+      journalEntries: related.journalEntries ?? [],
     },
   };
 }
 
 export function roadSegmentFeatureFromRow(
   row: RoadSegmentRow,
-  images: ImageRef[] = [],
+  related: Related = {},
 ): RoadSegmentFeature {
   return {
     type: "Feature",
@@ -103,7 +135,8 @@ export function roadSegmentFeatureFromRow(
       id: row.id,
       title: row.title,
       description: row.description,
-      images,
+      images: related.images ?? [],
+      journalEntries: related.journalEntries ?? [],
     },
   };
 }

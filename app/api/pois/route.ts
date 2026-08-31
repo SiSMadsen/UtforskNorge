@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { pois } from "@/db/schema";
 import { poiFeatureFromRow, type PoiCollection } from "@/lib/geojson";
 import { poiImagesByOwner } from "@/lib/images";
+import { poiJournalByOwner } from "@/lib/journal";
 
 // Reads live geometry out of PostGIS, so this route is evaluated per request.
 export const dynamic = "force-dynamic";
@@ -20,12 +21,19 @@ export async function GET() {
     })
     .from(pois);
 
-  const imagesByPoi = await poiImagesByOwner(rows.map((r) => r.id));
+  const ids = rows.map((r) => r.id);
+  const [imagesByPoi, journalByPoi] = await Promise.all([
+    poiImagesByOwner(ids),
+    poiJournalByOwner(ids),
+  ]);
 
   const body: PoiCollection = {
     type: "FeatureCollection",
     features: rows.map((row) =>
-      poiFeatureFromRow(row, imagesByPoi.get(row.id) ?? []),
+      poiFeatureFromRow(row, {
+        images: imagesByPoi.get(row.id) ?? [],
+        journalEntries: journalByPoi.get(row.id) ?? [],
+      }),
     ),
   };
 

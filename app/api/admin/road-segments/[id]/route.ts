@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { isUuid, parseLineString } from "@/lib/geo";
 import { roadSegmentFeatureFromRow } from "@/lib/geojson";
 import { roadSegmentImageList } from "@/lib/images";
+import { roadSegmentJournalList } from "@/lib/journal";
 import { deleteImage } from "@/lib/storage";
 
 type Params = { params: Promise<{ id: string }> };
@@ -74,8 +75,12 @@ export async function PATCH(request: Request, { params }: Params) {
     .returning(returning);
 
   if (!row) return Response.json({ error: "Not found." }, { status: 404 });
+  const [images, journalEntries] = await Promise.all([
+    roadSegmentImageList(id),
+    roadSegmentJournalList(id),
+  ]);
   return Response.json({
-    feature: roadSegmentFeatureFromRow(row, await roadSegmentImageList(id)),
+    feature: roadSegmentFeatureFromRow(row, { images, journalEntries }),
   });
 }
 

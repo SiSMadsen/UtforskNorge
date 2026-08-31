@@ -16,6 +16,7 @@ import {
 import type { LineString, Point } from "@/db/postgis";
 import type {
   ImageRef,
+  JournalEntry,
   PoiCollection,
   PoiFeature,
   RoadSegmentCollection,
@@ -76,13 +77,17 @@ export function AdminMap() {
     }
   }, []);
 
-  const handleImagesChange = useCallback(
-    (kind: "poi" | "road", id: string, images: ImageRef[]) => {
+  const patchFeatureProps = useCallback(
+    (
+      kind: "poi" | "road",
+      id: string,
+      patch: Partial<Pick<PoiFeature["properties"], "images" | "journalEntries">>,
+    ) => {
       if (kind === "poi") {
         setPois((prev) =>
           prev.map((f) =>
             f.properties.id === id
-              ? { ...f, properties: { ...f.properties, images } }
+              ? { ...f, properties: { ...f.properties, ...patch } }
               : f,
           ),
         );
@@ -90,13 +95,25 @@ export function AdminMap() {
         setRoads((prev) =>
           prev.map((f) =>
             f.properties.id === id
-              ? { ...f, properties: { ...f.properties, images } }
+              ? { ...f, properties: { ...f.properties, ...patch } }
               : f,
           ),
         );
       }
     },
     [],
+  );
+
+  const handleImagesChange = useCallback(
+    (kind: "poi" | "road", id: string, images: ImageRef[]) =>
+      patchFeatureProps(kind, id, { images }),
+    [patchFeatureProps],
+  );
+
+  const handleJournalChange = useCallback(
+    (kind: "poi" | "road", id: string, journalEntries: JournalEntry[]) =>
+      patchFeatureProps(kind, id, { journalEntries }),
+    [patchFeatureProps],
   );
 
   async function submitDraft(values: FeatureFormValues) {
@@ -281,6 +298,7 @@ export function AdminMap() {
             onSubmit={submitDraft}
             onCancel={() => setDraft(null)}
             onImagesChange={handleImagesChange}
+            onJournalChange={handleJournalChange}
           />
         ) : null}
       </div>

@@ -2,9 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 
-import type { ImageRef } from "@/lib/geojson";
+import type { ImageRef, JournalEntry } from "@/lib/geojson";
 
 import { ImageManager } from "./ImageManager";
+import { JournalManager } from "./JournalManager";
 import type { Draft, FeatureFormValues } from "./types";
 
 function initialValues(draft: Draft): FeatureFormValues {
@@ -24,6 +25,7 @@ export function FeatureForm({
   onSubmit,
   onCancel,
   onImagesChange,
+  onJournalChange,
 }: {
   draft: Draft;
   onSubmit: (values: FeatureFormValues) => Promise<void>;
@@ -32,6 +34,11 @@ export function FeatureForm({
     kind: "poi" | "road",
     id: string,
     images: ImageRef[],
+  ) => void;
+  onJournalChange: (
+    kind: "poi" | "road",
+    id: string,
+    journalEntries: JournalEntry[],
   ) => void;
 }) {
   // The parent gives this component a `key` tied to the draft's identity, so a
@@ -125,13 +132,21 @@ export function FeatureForm({
         ) : null}
 
         {draft.mode === "edit" ? (
-          <div className="border-t border-black/10 pt-3 dark:border-white/15">
+          <div className="space-y-3 border-t border-black/10 pt-3 dark:border-white/15">
             <ImageManager
               kind={draft.kind}
               ownerId={draft.id}
               images={draft.feature.properties.images}
               onChange={(images) =>
                 onImagesChange(draft.kind, draft.id, images)
+              }
+            />
+            <JournalManager
+              kind={draft.kind}
+              ownerId={draft.id}
+              entries={draft.feature.properties.journalEntries}
+              onChange={(journalEntries) =>
+                onJournalChange(draft.kind, draft.id, journalEntries)
               }
             />
           </div>
